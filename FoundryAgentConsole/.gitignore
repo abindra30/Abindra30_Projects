@@ -1,0 +1,8 @@
+# Secret overrides — never commit real credentials
+appsettings.Development.json
+appsettings.*.json
+!appsettings.json
+
+# .NET build artifacts
+bin/
+obj/
