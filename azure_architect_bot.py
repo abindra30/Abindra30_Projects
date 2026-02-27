@@ -1,13 +1,13 @@
 """
 Azure Architect Assistant
-A CLI chatbot powered by Azure OpenAI Service that provides technical guidance
+A CLI chatbot powered by Claude claude-opus-4-6 (Anthropic) that provides technical guidance
 on Azure infrastructure, AI apps, applications, data, and security — based
 strictly on official Microsoft documentation.
 """
 
 import os
 import sys
-from openai import AzureOpenAI
+import anthropic
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -34,51 +34,40 @@ Rules you must follow without exception:
 5. Be concise and technical. Avoid filler language."""
 
 
-def create_client() -> tuple[AzureOpenAI, str]:
-    """Create and return an AzureOpenAI client and deployment name from env vars."""
-    endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT")
-    api_key = os.environ.get("AZURE_OPENAI_API_KEY")
-    api_version = os.environ.get("AZURE_OPENAI_API_VERSION", "2024-02-01")
-    deployment = os.environ.get("AZURE_OPENAI_DEPLOYMENT")
+MODEL = "claude-opus-4-6"
 
-    if not endpoint or not api_key:
+
+def create_client() -> anthropic.Anthropic:
+    """Create and return an Anthropic client using environment variables."""
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+
+    if not api_key:
         print(
-            "Error: AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY must be set.\n"
+            "Error: ANTHROPIC_API_KEY must be set.\n"
             "Copy .env.example to .env and fill in your values.",
             file=sys.stderr,
         )
         sys.exit(1)
 
-    if not deployment:
-        print(
-            "Error: AZURE_OPENAI_DEPLOYMENT must be set.",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
-    client = AzureOpenAI(
-        azure_endpoint=endpoint,
-        api_key=api_key,
-        api_version=api_version,
-    )
-    return client, deployment
+    return anthropic.Anthropic(api_key=api_key)
 
 
-def chat(client: AzureOpenAI, deployment: str, history: list[dict[str, str]], user_message: str) -> str:
+def chat(client: anthropic.Anthropic, history: list[dict[str, str]], user_message: str) -> str:
     """Send a user message and return the assistant's response."""
     history.append({"role": "user", "content": user_message})
 
     try:
-        response = client.chat.completions.create(
-            model=deployment,
-            messages=[{"role": "system", "content": SYSTEM_PROMPT}] + history,
-            temperature=0,
+        response = client.messages.create(
+            model=MODEL,
+            max_tokens=4096,
+            system=SYSTEM_PROMPT,
+            messages=history,
         )
     except Exception as exc:
         history.pop()
-        raise RuntimeError(f"Azure OpenAI request failed: {exc}") from exc
+        raise RuntimeError(f"Anthropic API request failed: {exc}") from exc
 
-    assistant_message = response.choices[0].message.content
+    assistant_message = response.content[0].text
     history.append({"role": "assistant", "content": assistant_message})
     return assistant_message
 
@@ -86,11 +75,11 @@ def chat(client: AzureOpenAI, deployment: str, history: list[dict[str, str]], us
 def main() -> None:
     """Run the interactive Azure Architect assistant CLI."""
     print("Azure Architect Assistant")
-    print("Powered by Azure OpenAI Service")
+    print(f"Powered by {MODEL}")
     print("Guidance is based on official Microsoft documentation.")
     print("Type 'exit' or 'quit' to end the session.\n")
 
-    client, deployment = create_client()
+    client = create_client()
     history: list[dict[str, str]] = []
 
     while True:
@@ -108,7 +97,7 @@ def main() -> None:
             break
 
         try:
-            response = chat(client, deployment, history, user_input)
+            response = chat(client, history, user_input)
         except RuntimeError as exc:
             print(f"\nError: {exc}\n", file=sys.stderr)
             continue
