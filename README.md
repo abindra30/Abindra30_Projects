@@ -61,15 +61,36 @@ ANTHROPIC_API_KEY=<your-anthropic-api-key>
 
 ## Usage
 
+### 1. Start the assistant
+
 ```bash
 python azure_architect_bot.py
 ```
 
-Example session:
+The assistant starts an interactive session in your terminal.
+
+### 2. Ask a question
+
+At the `You:` prompt, type any Azure architecture or technology question
+and press **Enter**. The assistant replies based strictly on official
+Microsoft documentation.
+
+### 3. Continue the conversation
+
+Ask as many follow-up questions as you like — the assistant remembers the
+conversation history within a single session.
+
+### 4. End the session
+
+Type `exit` or `quit` (or press **Ctrl+C**) to quit.
+
+---
+
+### Example session
 
 ```
 Azure Architect Assistant
-Powered by Azure OpenAI Service
+Powered by claude-opus-4-6
 Guidance is based on official Microsoft documentation.
 Type 'exit' or 'quit' to end the session.
 
@@ -81,6 +102,16 @@ keys, and certificates. Applications should authenticate to Key Vault
 using managed identities (system-assigned or user-assigned) rather
 than storing credentials in code or configuration files. Reference:
 https://learn.microsoft.com/azure/key-vault/general/overview
+
+You: How does AKS differ from Azure Container Instances?
+
+Assistant: Per the Azure Kubernetes Service documentation on Microsoft Learn,
+AKS is a fully managed Kubernetes service suited for long-running, scalable
+workloads that need orchestration, auto-scaling, and rolling updates. Azure
+Container Instances (ACI) is a serverless container runtime for short-lived
+or burst workloads where you do not need cluster management. ACI can also
+be used as a virtual-node burst target for AKS. Reference:
+https://learn.microsoft.com/azure/aks/intro-kubernetes
 
 You: exit
 Goodbye.
